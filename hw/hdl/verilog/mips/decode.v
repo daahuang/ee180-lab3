@@ -113,6 +113,7 @@ module decode (
             {`SW, `DC6}:        alu_opcode = `ALU_ADD;
             {`BEQ, `DC6}:       alu_opcode = `ALU_SUBU;
             {`BNE, `DC6}:       alu_opcode = `ALU_SUBU;
+            {`XORI, `DC6}:      alu_opcode = `ALU_XOR;
             {`SPECIAL, `ADD}:   alu_opcode = `ALU_ADD;
             {`SPECIAL, `ADDU}:  alu_opcode = `ALU_ADDU;
             {`SPECIAL, `SUB}:   alu_opcode = `ALU_SUB;
@@ -127,6 +128,7 @@ module decode (
             {`SPECIAL, `SRL}:   alu_opcode = `ALU_SRL;
             {`SPECIAL, `SLLV}:  alu_opcode = `ALU_SLL;
             {`SPECIAL, `SRLV}:  alu_opcode = `ALU_SRL;
+            {`SPECIAL, `XOR}:   alu_opcode = `ALU_XOR;
             // compare rs data to 0, only care about 1 operand
             {`BGTZ, `DC6}:      alu_opcode = `ALU_PASSX;
             {`BLEZ, `DC6}:      alu_opcode = `ALU_PASSX;
@@ -153,8 +155,10 @@ module decode (
 
     wire [31:0] imm_sign_extend = {{16{immediate[15]}}, immediate};
     wire [31:0] imm_upper = {immediate, 16'b0};
+    wire [31:0] imm_zero_extend = {16'b0, immediate}; //added for ORI
 
-    wire [31:0] imm = (op == `LUI) ? imm_upper : imm_sign_extend;
+    wire [31:0] imm1 = (op == `LUI) ? imm_upper : imm_sign_extend;
+    wire [31:0] imm = (op == `ORI) ? imm_zero_extend : imm1; //added for ORI (imm1 also added)
 
 //******************************************************************************
 // forwarding and stalling logic
