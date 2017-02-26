@@ -129,6 +129,7 @@ module decode (
             {`SPECIAL, `SLLV}:  alu_opcode = `ALU_SLL;
             {`SPECIAL, `SRLV}:  alu_opcode = `ALU_SRL;
             {`SPECIAL, `XOR}:   alu_opcode = `ALU_XOR;
+            {`SPECIAL2, `MUL}:   alu_opcode = `ALU_MUL; // why SPECIAL2 ????????
             // compare rs data to 0, only care about 1 operand
             {`BGTZ, `DC6}:      alu_opcode = `ALU_PASSX;
             {`BLEZ, `DC6}:      alu_opcode = `ALU_PASSX;
@@ -158,7 +159,8 @@ module decode (
     wire [31:0] imm_zero_extend = {16'b0, immediate}; //added for ORI
 
     wire [31:0] imm1 = (op == `LUI) ? imm_upper : imm_sign_extend;
-    wire [31:0] imm = (op == `ORI) ? imm_zero_extend : imm1; //added for ORI (imm1 also added)
+    wire [31:0] imm = (op == `ORI) ? imm_zero_extend : imm1; //added for ORI and LBU (imm1 also added)
+    //wire [31:0] imm = |{op == `ORI, op == `SLTIU} ? imm_zero_extend : imm1; //added for ORI and LBU (imm1 also added)
 
 //******************************************************************************
 // forwarding and stalling logic
