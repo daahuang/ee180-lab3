@@ -15,6 +15,7 @@ module decode (
     output wire [4:0] reg_write_addr,
     output wire jump_branch,
     output wire jump_target,
+    output wire [31:0] b_addr,
     output wire jump_reg,
     output wire [31:0] jr_pc,
     output reg [3:0] alu_opcode,
@@ -115,7 +116,8 @@ module decode (
             {`BEQ, `DC6}:       alu_opcode = `ALU_SUBU;
             {`BNE, `DC6}:       alu_opcode = `ALU_SUBU;
             {`XORI, `DC6}:      alu_opcode = `ALU_XOR;
-            {`SPECIAL, `ADD}:   alu_opcode = `ALU_ADD;
+            //{`BLTZ, `DC6}:	alu_opcode = `ALU_SLT;
+	    {`SPECIAL, `ADD}:   alu_opcode = `ALU_ADD;
             {`SPECIAL, `ADDU}:  alu_opcode = `ALU_ADDU;
             {`SPECIAL, `SUB}:   alu_opcode = `ALU_SUB;
             {`SPECIAL, `SUBU}:  alu_opcode = `ALU_SUBU;
@@ -137,10 +139,11 @@ module decode (
             {`BGTZ, `DC6}:      alu_opcode = `ALU_PASSX;
             {`BLEZ, `DC6}:      alu_opcode = `ALU_PASSX;
             {`BLTZ_GEZ, `DC6}: begin
-                if (isBranchLink)
+                if (isBranchLink) 
                     alu_opcode = `ALU_PASSY; // pass link address for mem stage
                 else
-                    alu_opcode = `ALU_PASSX;
+                    alu_opcode = `ALU_PASSX; 
+                    //alu_opcode = isBLTZNL ? `ALU_SLT : `ALU_PASSX; //TODO: set aluopcode for BGEZ
             end
             // pass link address to be stored in $ra
             {`JAL, `DC6}:       alu_opcode = `ALU_PASSY;
@@ -239,9 +242,16 @@ module decode (
     wire isEqual = rs_data == rt_data;
 
     assign jump_branch = |{isBEQ & isEqual,
-                           isBNE & ~isEqual};
+                           isBNE & ~isEqual,
+                           isBLTZNL & ( $signed(rs_data) < $signed(32'b0) ), 
+                           isBGEZNL & ( $signed(rs_data) >= $signed(32'b0) ),
+                           isBLEZ & ( $signed(rs_data) <= $signed(32'b0) ),
+                           isBGTZ & ( $signed(rs_data) > $signed(32'b0) )
+			  };
 
     assign jump_target = isJ;
     assign jump_reg = 1'b0;
+    
+    assign b_addr = pc + (imm_sign_extend << 2);
 
 endmodule

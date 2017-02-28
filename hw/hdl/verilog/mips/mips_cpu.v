@@ -19,6 +19,7 @@ module mips_cpu (
 );
 
     wire [31:0] pc_if, pc_id;
+    wire [31:0] b_addr_id;
     wire [31:0] instr_sav;
     wire [31:0] instr_id;
     wire jump_branch_id, jump_target_id, jump_reg_id;
@@ -54,7 +55,9 @@ module mips_cpu (
         .rst            (rst),
         .en             (en_if),
         .jump_target    (jump_target_id),
+        .jump_branch    (jump_branch_id),
         .pc_id          (pc_id),
+        .b_addr         (b_addr_id),
         .instr_id       (instr_id[25:0]),
         .pc             (pc_if)
     );
@@ -74,6 +77,7 @@ module mips_cpu (
     decode d_stage (
         // inputs
         .pc                 (pc_id),
+        .b_addr             (b_addr_id),
         .instr              (instr_id),
         .rs_data_in         (rs_data_id),
         .rt_data_in         (rt_data_id),

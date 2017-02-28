@@ -33,7 +33,7 @@ $done:
     nop
 
 $target_ne:
-    j       $finish
     ori     $v0, $0, 1          # Set the result to pass
+    j       $finish
 
     .end boot
