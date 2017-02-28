@@ -86,13 +86,14 @@ module decode (
 // shift instruction decode
 //******************************************************************************
 
+    wire isSRA = (op == `SPECIAL) & (funct == `SRA);
     wire isSLL = (op == `SPECIAL) & (funct == `SLL);
     wire isSRL = (op == `SPECIAL) & (funct == `SRL);
     wire isSLLV = (op == `SPECIAL) & (funct == `SLLV);
     wire isSRLV = (op == `SPECIAL) & (funct == `SRLV);
-
-    wire isShiftImm = isSLL | isSRL;
-    wire isShift = isShiftImm | isSLLV | isSRLV;
+    wire isSRAV = (op == `SPECIAL) & (funct == `SRAV);
+    wire isShiftImm = isSLL | isSRL | isSRA;
+    wire isShift = isShiftImm | isSLLV | isSRLV | isSRAV;
 
 //******************************************************************************
 // ALU instructions decode / control signal for ALU datapath
@@ -129,7 +130,9 @@ module decode (
             {`SPECIAL, `SLLV}:  alu_opcode = `ALU_SLL;
             {`SPECIAL, `SRLV}:  alu_opcode = `ALU_SRL;
             {`SPECIAL, `XOR}:   alu_opcode = `ALU_XOR;
-            {`SPECIAL2, `MUL}:   alu_opcode = `ALU_MUL; // why SPECIAL2 ????????
+	    {`SPECIAL, `SRA}:	alu_opcode = `ALU_SRA;	
+            {`SPECIAL, `SRAV}:	alu_opcode = `ALU_SRA;
+	    {`SPECIAL2, `MUL}:   alu_opcode = `ALU_MUL; // why SPECIAL2 ????????
             // compare rs data to 0, only care about 1 operand
             {`BGTZ, `DC6}:      alu_opcode = `ALU_PASSX;
             {`BLEZ, `DC6}:      alu_opcode = `ALU_PASSX;
