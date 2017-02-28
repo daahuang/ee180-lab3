@@ -82,6 +82,7 @@ module decode (
 //******************************************************************************
 
     wire isJ    = (op == `J);
+    wire isJR 	= (op == `SPECIAL) & (funct == `JR);
 
 //******************************************************************************
 // shift instruction decode
@@ -209,7 +210,7 @@ module decode (
 
     // determine when to write back to a register (any operation that isn't an
     // unconditional store, non-linking branch, or non-linking jump)
-    assign reg_we = ~|{(mem_we & (op != `SC)), isJ, isBGEZNL, isBGTZ, isBLEZ, isBLTZNL, isBNE, isBEQ};
+    assign reg_we = ~|{(mem_we & (op != `SC)), isJ, isJR, isBGEZNL, isBGTZ, isBLEZ, isBLTZNL, isBNE, isBEQ};
 
     // determine whether a register write is conditional
     assign movn = &{op == `SPECIAL, funct == `MOVN};
@@ -250,7 +251,7 @@ module decode (
 			  };
 
     assign jump_target = isJ;
-    assign jump_reg = 1'b0;
+    assign jump_reg = isJR;
     
     assign b_addr = pc + (imm_sign_extend << 2);
 
