@@ -166,7 +166,7 @@ module decode (
     wire [31:0] imm_zero_extend = {16'b0, immediate}; //added for ORI
 
     wire [31:0] imm1 = (op == `LUI) ? imm_upper : imm_sign_extend;
-    wire [31:0] imm = (op == `ORI) ? imm_zero_extend : imm1; //added for ORI and LBU (imm1 also added)
+    wire [31:0] imm = {(op == `ORI) | (op == `XORI) | (op == `ANDI)} ? imm_zero_extend : imm1; //added for ORI and XORI and LBU (imm1 also added)
     //wire [31:0] imm = |{op == `ORI, op == `SLTIU} ? imm_zero_extend : imm1; //added for ORI and LBU (imm1 also added)
 
 //******************************************************************************
@@ -174,19 +174,22 @@ module decode (
 //******************************************************************************
 
     wire forward_rs_mem = &{rs_addr == reg_write_addr_mem, rs_addr != `ZERO, reg_we_mem};
-
+    wire forward_rt_mem = &{rt_addr == reg_write_addr_mem, rt_addr != `ZERO, reg_we_mem}; //implement fwd_idrt_mem 
+    
     assign rs_data = forward_rs_mem ? reg_write_data_mem : rs_data_in;
-    assign rt_data = rt_data_in;
+    assign rt_data = forward_rt_mem ? reg_write_data_mem : rt_data_in; //edit to implement fwd_idrt_mem
 
     wire rs_mem_dependency = &{rs_addr == reg_write_addr_ex, mem_read_ex, rs_addr != `ZERO};
+    wire rt_mem_dependency = &{rt_addr == reg_write_addr_ex, mem_read_ex, rt_addr != `ZERO}; //implement fwd_idrt_mem
 
     wire isLUI = op == `LUI;
     wire read_from_rs = ~|{isLUI, jump_target, isShiftImm};
 
-    wire isALUImm = |{op == `ADDI, op == `ADDIU, op == `SLTI, op == `SLTIU, op == `ANDI, op == `ORI};
-    wire read_from_rt = ~|{isLUI, jump_target, isALUImm, mem_read};
+    wire isALUImm = |{op == `ADDI, op == `ADDIU, op == `SLTI, op == `SLTIU, op == `ANDI, op == `ORI, op == `XORI};
+    wire read_from_rt = ~|{isLUI, jump_target, jump_reg, isALUImm, mem_read};// added jump_reg to this list
 
-    assign stall = rs_mem_dependency & read_from_rs;
+//    assign stall = (rs_mem_dependency & read_from_rs) | (rt_mem_dependency & read_from_rt); //implement fwd_idrt_mem
+    assign stall = (rs_mem_dependency & read_from_rs);
 
     assign jr_pc = rs_data;
     assign mem_write_data = rt_data;
