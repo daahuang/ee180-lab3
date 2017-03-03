@@ -61,6 +61,7 @@ module decode (
     wire [15:0] immediate = instr[15:0];
 
     wire [31:0] rs_data, rt_data;
+    wire [31:0] rs_data_ex, rt_data_ex;
 
 //******************************************************************************
 // branch instructions decode
@@ -173,11 +174,16 @@ module decode (
 // forwarding and stalling logic
 //******************************************************************************
 
-    wire forward_rs_mem = &{rs_addr == reg_write_addr_mem, rs_addr != `ZERO, reg_we_mem};
-    wire forward_rt_mem = &{rt_addr == reg_write_addr_mem, rt_addr != `ZERO, reg_we_mem}; //implement fwd_idrt_mem 
+    wire forward_rs_ex = &{rs_addr == reg_write_addr_ex, rs_addr != `ZERO, reg_we_ex};
+    wire forward_rt_ex = &{rt_addr == reg_write_addr_ex, rt_addr != `ZERO, reg_we_ex}; //implement fwd_idrt_mem 
+    wire forward_rs_mem = &{rs_addr == reg_write_addr_mem, rs_addr != `ZERO, reg_we_mem, !forward_rs_ex}; // implement fwd_idrs_ex
+    wire forward_rt_mem = &{rt_addr == reg_write_addr_mem, rt_addr != `ZERO, reg_we_mem, !forward_rt_ex}; //implement fwd_idrt_ex 
+
+    assign rs_data_ex = forward_rs_ex ? alu_result_ex : rs_data_in;
+    assign rt_data_ex = forward_rt_ex ? alu_result_ex : rt_data_in;
     
-    assign rs_data = forward_rs_mem ? reg_write_data_mem : rs_data_in;
-    assign rt_data = forward_rt_mem ? reg_write_data_mem : rt_data_in; //edit to implement fwd_idrt_mem
+    assign rs_data = forward_rs_mem ? reg_write_data_mem : rs_data_ex;
+    assign rt_data = forward_rt_mem ? reg_write_data_mem : rt_data_ex; //edit to implement fwd_idrt_mem
 
     wire rs_mem_dependency = &{rs_addr == reg_write_addr_ex, mem_read_ex, rs_addr != `ZERO};
     wire rt_mem_dependency = &{rt_addr == reg_write_addr_ex, mem_read_ex, rt_addr != `ZERO}; //implement fwd_idrt_mem
@@ -188,8 +194,8 @@ module decode (
     wire isALUImm = |{op == `ADDI, op == `ADDIU, op == `SLTI, op == `SLTIU, op == `ANDI, op == `ORI, op == `XORI};
     wire read_from_rt = ~|{isLUI, jump_target, jump_reg, isALUImm, mem_read};// added jump_reg to this list
 
-//    assign stall = (rs_mem_dependency & read_from_rs) | (rt_mem_dependency & read_from_rt); //implement fwd_idrt_mem
-    assign stall = (rs_mem_dependency & read_from_rs);
+    assign stall = (rs_mem_dependency & read_from_rs) | (rt_mem_dependency & read_from_rt); //implement fwd_idrt_mem
+    // assign stall = (rs_mem_dependency & read_from_rs);
 
     assign jr_pc = rs_data;
     assign mem_write_data = rt_data;
