@@ -82,6 +82,7 @@ module decode (
 // jump instructions decode
 //******************************************************************************
 
+    wire isJAL  = (op == `JAL);
     wire isJ    = (op == `J);
     wire isJR 	= (op == `SPECIAL) & (funct == `JR);
 
@@ -214,8 +215,8 @@ module decode (
     // for immediate operations, use Imm
     // otherwise use rt
 
-    assign alu_op_y = (use_imm) ? imm : rt_data;
-    assign reg_write_addr = (use_imm) ? rt_addr : rd_addr;
+    assign alu_op_y = (isJAL) ? (pc + 4'h8) : (use_imm) ? imm : rt_data; 
+    assign reg_write_addr = (isJAL) ? `RA : (use_imm) ? rt_addr : rd_addr;
 
     // determine when to write back to a register (any operation that isn't an
     // unconditional store, non-linking branch, or non-linking jump)
@@ -259,7 +260,7 @@ module decode (
                            isBGTZ & ( $signed(rs_data) > $signed(32'b0) )
 			  };
 
-    assign jump_target = isJ;
+    assign jump_target = isJ | isJAL;
     assign jump_reg = isJR;
     
     assign b_addr = pc + (imm_sign_extend << 2);
