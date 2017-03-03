@@ -20,12 +20,8 @@ boot:
     lui     $s0, 0x8002         # Load the base address of the status/test registers
     ori     $s1, $0, 1          # Prepare the 'done' status
     lui     $t0, 0xffff         # Load -1
-    nop
-    nop
-    nop
     ori     $t0, $t0, 0xffff
     blez    $t0, $target
-    nop
     ori     $v0, $0, 0          # The test result starts as a failure
 
 $finish:

@@ -21,22 +21,13 @@ boot:
     ori     $s1, $0, 1          # Prepare the 'done' status
     # la      $t0, $target
     lui     $t0, 0x0
-    nop
-    nop
-    nop
     addiu   $t0, $t0, $target
-    nop
-    nop
-    nop
 #    jr      $t0		# removed to test jal
-    nop
     ori     $v0, $0, 0          # The test result starts as a failure
     jal	    $target		# added to test jal
     nop				# added to test jal
 
 $finish:
-    nop
-    nop
     sw      $v0, 4($s0)
     sw      $s1, 0($s0)
 
@@ -45,9 +36,6 @@ $done:
     nop
 
 $target:
-    nop
-    nop
-    nop
    # ori     $v0, $0, 1          # Set the result to pass
     jr      $ra			# edited to test jal
     ori     $v0, $0, 1          # Set the result to pass

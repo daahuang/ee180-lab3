@@ -25,8 +25,6 @@ boot:
     nop
 
 $finish:
-    nop
-    nop
     sw      $v0, 4($s0)
     sw      $s1, 0($s0)
 
