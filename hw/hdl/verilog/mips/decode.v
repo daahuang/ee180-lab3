@@ -85,6 +85,7 @@ module decode (
     wire isJAL  = (op == `JAL);
     wire isJ    = (op == `J);
     wire isJR 	= (op == `SPECIAL) & (funct == `JR);
+    wire isJALR = (op == `SPECIAL) & (funct == `JALR); 
 
 //******************************************************************************
 // shift instruction decode
@@ -119,7 +120,6 @@ module decode (
             {`BEQ, `DC6}:       alu_opcode = `ALU_SUBU;
             {`BNE, `DC6}:       alu_opcode = `ALU_SUBU;
             {`XORI, `DC6}:      alu_opcode = `ALU_XOR;
-            //{`BLTZ, `DC6}:	alu_opcode = `ALU_SLT;
 	    {`SPECIAL, `ADD}:   alu_opcode = `ALU_ADD;
             {`SPECIAL, `ADDU}:  alu_opcode = `ALU_ADDU;
             {`SPECIAL, `SUB}:   alu_opcode = `ALU_SUB;
@@ -137,7 +137,8 @@ module decode (
             {`SPECIAL, `XOR}:   alu_opcode = `ALU_XOR;
 	    {`SPECIAL, `SRA}:	alu_opcode = `ALU_SRA;	
             {`SPECIAL, `SRAV}:	alu_opcode = `ALU_SRA;
-	    {`SPECIAL2, `MUL}:   alu_opcode = `ALU_MUL; // why SPECIAL2 ????????
+	    {`SPECIAL, `NOR}:	alu_opcode = `ALU_NOR;
+	    {`SPECIAL2, `MUL}:  alu_opcode = `ALU_MUL; // why SPECIAL2 ????????
             // compare rs data to 0, only care about 1 operand
             {`BGTZ, `DC6}:      alu_opcode = `ALU_PASSX;
             {`BLEZ, `DC6}:      alu_opcode = `ALU_PASSX;
@@ -146,8 +147,7 @@ module decode (
                     alu_opcode = `ALU_PASSY; // pass link address for mem stage
                 else
                     alu_opcode = `ALU_PASSX; 
-                    //alu_opcode = isBLTZNL ? `ALU_SLT : `ALU_PASSX; //TODO: set aluopcode for BGEZ
-            end
+                end
             // pass link address to be stored in $ra
             {`JAL, `DC6}:       alu_opcode = `ALU_PASSY;
             {`SPECIAL, `JALR}:  alu_opcode = `ALU_PASSY;
@@ -215,8 +215,10 @@ module decode (
     // for immediate operations, use Imm
     // otherwise use rt
 
-    assign alu_op_y = (isJAL) ? (pc + 4'h8) : (use_imm) ? imm : rt_data; 
-    assign reg_write_addr = (isJAL) ? `RA : (use_imm) ? rt_addr : rd_addr;
+    assign alu_op_y = (isJAL | isJALR) ? (pc + 4'h8) : (use_imm) ? imm : rt_data; 
+    //assign reg_write_addr = (isJAL) ? `RA : (use_imm) ? rt_addr : rd_addr;
+    assign reg_write_addr = (op == `SC) ? rt_addr : (isJAL | isJALR) ? `RA : (use_imm) ? rt_addr : rd_addr; 
+//SC: (op == `SC) ? rt_addr
 
     // determine when to write back to a register (any operation that isn't an
     // unconditional store, non-linking branch, or non-linking jump)
@@ -240,11 +242,17 @@ module decode (
 //******************************************************************************
     assign mem_sc_id = (op == `SC);
 
-    // 'atomic_id' is high when a load-linked has not been followed by a load.
-    assign atomic_id = 1'b0;
-
     // 'mem_sc_mask_id' is high when a store conditional should not store
-    assign mem_sc_mask_id = 1'b0;
+    //assign mem_sc_mask_id = 1'b0;
+    //assign mem_sc_mask_id = |{(!atomic_ex), address doesn't match, contents don't match};
+    assign mem_sc_mask_id = !atomic_ex & mem_sc_id; // should not store if not atomic
+
+    // 'atomic_id' is high when a load-linked has not been followed by a load
+    //assign atomic_id = 1'b0;
+    // set atomic to true when op is LL, update to be false when there is store
+    assign atomic_id = (op == `LL) ? 1'b1 : mem_we ? 1'b0 : atomic_ex;
+
+
 
 //******************************************************************************
 // Branch resolution
@@ -261,7 +269,7 @@ module decode (
 			  };
 
     assign jump_target = isJ | isJAL;
-    assign jump_reg = isJR;
+    assign jump_reg = isJR | isJALR; 
     
     assign b_addr = pc + (imm_sign_extend << 2);
 

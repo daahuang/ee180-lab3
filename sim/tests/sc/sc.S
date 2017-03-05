@@ -1,12 +1,12 @@
 ###############################################################################
-# File         : blez.S
+# File         : ll.S
 # Project      : EE180 Lab 2: MIPS
 #
 # Standards/Formatting:
 #   MIPS gas, soft tab, 80 column
 #
 # Description:
-#   Test the functionality of the 'blez' instruction.
+#   Test the functionality of the 'll' instruction.
 #
 ###############################################################################
 
@@ -19,22 +19,20 @@
 boot:
     lui     $s0, 0x8002         # Load the base address of the status/test registers
     ori     $s1, $0, 1          # Prepare the 'done' status
-#    lui     $t0, 0xffff         # Load -1
-#    ori     $t0, $t0, 0xffff
-    addiu   $t0, $0, 0		# Load 0
-    blez    $t0, $target
-    ori     $v0, $0, 0          # The test result starts as a failure
-
-$finish:
-    sw      $v0, 4($s0)
-    sw      $s1, 0($s0)
+    lui     $t0, 0              # Load some valid address 0x00003210 to register $t0
+    ori     $t0, $t0, 0x3210
+    sw      $0, 0($t0)
+    ori     $t1, $0, 1
+    ll      $t2, 0($t0)
+    #sc      $t1, 0($t0)
+    sc      $t1, 0($t0)
+    lw      $t2, 0($t0)
+    and     $t2, $t2, $t1
+    sw      $t2, 4($s0)         # Set the test result
+    sw      $s1, 0($s0)         # Set 'done'
 
 $done:
     j       $done
     nop
-
-$target:
-    ori     $v0, $0, 1          # Set the result to pass
-    j       $finish
 
     .end boot

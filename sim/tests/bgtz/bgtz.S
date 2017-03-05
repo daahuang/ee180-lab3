@@ -1,12 +1,12 @@
 ###############################################################################
-# File         : blez.S
+# File         : bgtz.S
 # Project      : EE180 Lab 2: MIPS
 #
 # Standards/Formatting:
 #   MIPS gas, soft tab, 80 column
 #
 # Description:
-#   Test the functionality of the 'blez' instruction.
+#   Test the functionality of the 'bgtz' instruction.
 #
 ###############################################################################
 
@@ -19,10 +19,8 @@
 boot:
     lui     $s0, 0x8002         # Load the base address of the status/test registers
     ori     $s1, $0, 1          # Prepare the 'done' status
-#    lui     $t0, 0xffff         # Load -1
-#    ori     $t0, $t0, 0xffff
-    addiu   $t0, $0, 0		# Load 0
-    blez    $t0, $target
+    ori     $t0, $0, 0xffff     # Load a positive/zero number
+    bgtz    $t0, $target
     ori     $v0, $0, 0          # The test result starts as a failure
 
 $finish:
@@ -34,7 +32,7 @@ $done:
     nop
 
 $target:
-    ori     $v0, $0, 1          # Set the result to pass
     j       $finish
+    ori     $v0, $0, 1          # Set the result to pass
 
     .end boot

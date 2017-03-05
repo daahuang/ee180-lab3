@@ -1,15 +1,14 @@
 ###############################################################################
-# File         : blez.S
+# File         : sllv.S
 # Project      : EE180 Lab 2: MIPS
 #
 # Standards/Formatting:
 #   MIPS gas, soft tab, 80 column
 #
 # Description:
-#   Test the functionality of the 'blez' instruction.
+#   Test the functionality of the 'sllv' instruction.
 #
 ###############################################################################
-
 
     .section .boot, "x"
     .balign 4
@@ -19,22 +18,18 @@
 boot:
     lui     $s0, 0x8002         # Load the base address of the status/test registers
     ori     $s1, $0, 1          # Prepare the 'done' status
-#    lui     $t0, 0xffff         # Load -1
-#    ori     $t0, $t0, 0xffff
-    addiu   $t0, $0, 0		# Load 0
-    blez    $t0, $target
-    ori     $v0, $0, 0          # The test result starts as a failure
-
-$finish:
-    sw      $v0, 4($s0)
-    sw      $s1, 0($s0)
+    lui     $t0, 0xdeaf         # A = 0xdeafbeef
+    ori     $t0, $t0, 0x0123
+    addiu   $t4, $0, 4
+    sllv    $t1, $t0, $t4       # B = 0xdeaf0123 << 4 = 0xeaf01230
+    lui     $t2, 0xeaf0         # C = 0xeaf01231
+    ori     $t2, $t2, 0x1231
+    subu    $t3, $t2, $t1       # D = C - B = 1
+    sw      $t3, 4($s0)         # Set the test result
+    sw      $s1, 0($s0)         # Set 'done'
 
 $done:
     j       $done
     nop
-
-$target:
-    ori     $v0, $0, 1          # Set the result to pass
-    j       $finish
 
     .end boot

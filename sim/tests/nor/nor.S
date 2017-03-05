@@ -1,15 +1,14 @@
 ###############################################################################
-# File         : blez.S
+# File         : nor.S
 # Project      : EE180 Lab 2: MIPS
 #
 # Standards/Formatting:
 #   MIPS gas, soft tab, 80 column
 #
 # Description:
-#   Test the functionality of the 'blez' instruction.
+#   Test the functionality of the 'nor' instruction.
 #
 ###############################################################################
-
 
     .section .boot, "x"
     .balign 4
@@ -18,23 +17,14 @@
     .ent    boot
 boot:
     lui     $s0, 0x8002         # Load the base address of the status/test registers
-    ori     $s1, $0, 1          # Prepare the 'done' status
-#    lui     $t0, 0xffff         # Load -1
-#    ori     $t0, $t0, 0xffff
-    addiu   $t0, $0, 0		# Load 0
-    blez    $t0, $target
-    ori     $v0, $0, 0          # The test result starts as a failure
-
-$finish:
-    sw      $v0, 4($s0)
-    sw      $s1, 0($s0)
+    lui     $s2, 0xffff          # Prepare the 'done' status
+    ori     $s2, $s2, 0xfffe
+    nor	    $s1, $0, $s2	
+    sw      $s1, 4($s0)         # Set the test result
+    sw      $s1, 0($s0)         # Set 'done'
 
 $done:
     j       $done
     nop
-
-$target:
-    ori     $v0, $0, 1          # Set the result to pass
-    j       $finish
 
     .end boot

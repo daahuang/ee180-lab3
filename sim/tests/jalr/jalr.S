@@ -1,12 +1,12 @@
 ###############################################################################
-# File         : blez.S
+# File         : jalr.S
 # Project      : EE180 Lab 2: MIPS
 #
 # Standards/Formatting:
 #   MIPS gas, soft tab, 80 column
 #
 # Description:
-#   Test the functionality of the 'blez' instruction.
+#   Test the functionality of the 'jalr' instruction.
 #
 ###############################################################################
 
@@ -19,11 +19,13 @@
 boot:
     lui     $s0, 0x8002         # Load the base address of the status/test registers
     ori     $s1, $0, 1          # Prepare the 'done' status
-#    lui     $t0, 0xffff         # Load -1
-#    ori     $t0, $t0, 0xffff
-    addiu   $t0, $0, 0		# Load 0
-    blez    $t0, $target
+    # la      $t0, $target
+    lui     $t0, 0x0
+    addiu   $t0, $t0, $target
+#    jr      $t0		# removed to test jal
     ori     $v0, $0, 0          # The test result starts as a failure
+    jalr    $t0			# added to test jal
+    nop				# added to test jal
 
 $finish:
     sw      $v0, 4($s0)
@@ -34,7 +36,9 @@ $done:
     nop
 
 $target:
+   # ori     $v0, $0, 1          # Set the result to pass
+    jr      $ra			# edited to test jal
     ori     $v0, $0, 1          # Set the result to pass
-    j       $finish
+   
 
     .end boot
