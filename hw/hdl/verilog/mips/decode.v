@@ -271,6 +271,6 @@ module decode (
     assign jump_target = isJ | isJAL;
     assign jump_reg = isJR | isJALR; 
     
-    assign b_addr = pc + (imm_sign_extend << 2);
+    assign b_addr = pc + 3'h4 + (imm_sign_extend << 2);
 
 endmodule
